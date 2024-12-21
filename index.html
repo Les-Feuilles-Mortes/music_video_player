@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>钢琴模拟器</title>
+    <style>
+        body {
+            background-color: #1a1a1a;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        .title {
+            color: #fff;
+            margin-bottom: 20px;
+        }
+
+        .piano-container {
+            background: #272727;
+            padding: 25px 25px 35px 25px;
+            border-radius: 15px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+        }
+
+        .piano {
+            position: relative;
+            display: flex;
+            background: #272727;
+            padding: 20px;
+        }
+
+        .key {
+            width: 45px;
+            height: 180px;
+            background: linear-gradient(to bottom, #fff 0%, #eee 100%);
+            border: 1px solid #ccc;
+            border-radius: 0 0 5px 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 8px;
+            margin: 0;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+            transition: all 0.1s ease;
+            position: relative;
+            z-index: 1;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .key:active, .key.active {
+            background: linear-gradient(to bottom, #eee 0%, #ddd 100%);
+            transform: translateY(2px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .black-keys {
+            position: absolute;
+            top: 20px;
+            left: 32px;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .black-key {
+            width: 30px;
+            height: 110px;
+            background: linear-gradient(to bottom, #333 0%, #000 100%);
+            border-radius: 0 0 3px 3px;
+            cursor: pointer;
+            z-index: 2;
+            pointer-events: auto;
+            box-shadow: inset 0px -1px 2px rgba(255,255,255,0.4),
+                       0 2px 3px rgba(0,0,0,0.4);
+            transition: all 0.1s ease;
+            position: absolute;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 8px;
+        }
+
+        .black-key:active, .black-key.active {
+            background: linear-gradient(to bottom, #000 0%, #222 100%);
+            transform: translateY(2px);
+            box-shadow: inset 0px -1px 2px rgba(255,255,255,0.4),
+                       0 1px 1px rgba(0,0,0,0.4);
+        }
+
+        .black-key[data-note$="#3"]:nth-child(1) { left: 30px; }
+        .black-key[data-note$="#3"]:nth-child(2) { left: 75px; }
+        .black-key[data-note$="#3"]:nth-child(4) { left: 165px; }
+        .black-key[data-note$="#3"]:nth-child(5) { left: 210px; }
+        .black-key[data-note$="#3"]:nth-child(6) { left: 255px; }
+
+        .black-key[data-note$="#4"]:nth-child(8) { left: 345px; }
+        .black-key[data-note$="#4"]:nth-child(9) { left: 390px; }
+        .black-key[data-note$="#4"]:nth-child(11) { left: 480px; }
+        .black-key[data-note$="#4"]:nth-child(12) { left: 525px; }
+        .black-key[data-note$="#4"]:nth-child(13) { left: 570px; }
+
+        .black-key[data-note$="#5"]:nth-child(15) { left: 660px; }
+        .black-key[data-note$="#5"]:nth-child(16) { left: 705px; }
+        .black-key[data-note$="#5"]:nth-child(18) { left: 795px; }
+        .black-key[data-note$="#5"]:nth-child(19) { left: 840px; }
+        .black-key[data-note$="#5"]:nth-child(20) { left: 885px; }
+
+        .octave-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #888;
+            font-size: 12px;
+        }
+
+        .key-label {
+            position: absolute;
+            bottom: 5px;
+            font-size: 11px;
+            color: #666;
+        }
+
+        .black-key .key-label {
+            color: #fff;
+        }
+
+        .keyboard-container {
+            margin-top: 40px;
+            background: #272727;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            max-width: 1000px;
+            overflow-x: auto;
+        }
+
+        .keyboard {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            position: relative;
+        }
+
+        .keyboard-row {
+            display: flex;
+            justify-content: flex-start;
+            gap: 4px;
+            position: relative;
+        }
+
+        .keyboard-row:first-child {
+            padding-left: 185px;
+        }
+
+        .keyboard-row:nth-child(2) {
+            padding-left: 75px;
+        }
+
+        .keyboard-row:nth-child(3) {
+            padding-left: 135px;
+        }
+
+        .keyboard-row:nth-child(4) {
+            padding-left: 105px;
+        }
+
+        .key-cap {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(to bottom, #f8f8f8 0%, #e8e8e8 100%);
+            border: 1px solid #999;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #333;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: all 0.1s ease;
+            position: relative;
+        }
+
+        .key-cap span {
+            font-size: 10px;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .key-cap.black {
+            background: linear-gradient(to bottom, #444 0%, #222 100%);
+            color: #fff;
+            height: 45px;
+        }
+
+        .key-cap.black span {
+            color: #ccc;
+        }
+
+        .key-cap.black.active {
+            background: linear-gradient(to bottom, #333 0%, #111 100%);
+            transform: translateY(2px);
+        }
+
+        .key-cap.active {
+            transform: translateY(2px);
+            box-shadow: 0 0 2px rgba(0,0,0,0.2);
+            background: linear-gradient(to bottom, #e8e8e8 0%, #d8d8d8 100%);
+        }
+
+        .key-cap.black.active {
+            background: linear-gradient(to bottom, #444 0%, #222 100%);
+        }
+
+        .control-panel {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .control-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background: #444;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .control-btn:disabled {
+            background: #333;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .control-btn:not(:disabled):hover {
+            background: #555;
+        }
+
+        .record-icon, .play-icon, .save-icon {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .record-icon {
+            background: #ff4444;
+        }
+
+        .record-icon.recording {
+            animation: pulse 1s infinite;
+        }
+
+        .play-icon {
+            width: 12px;
+            height: 12px;
+            position: relative;
+            margin-right: 8px;
+        }
+
+        .play-icon::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: #4CAF50;
+            clip-path: polygon(0 0, 0 100%, 100% 50%);
+            transition: clip-path 0.2s ease;
+        }
+
+        .play-icon.paused::before {
+            clip-path: polygon(40% 100%, 40% 0, 0 0, 0 100%, 100% 100%, 100% 0, 60% 0, 60% 100%);
+        }
+
+        .save-icon {
+            background: #2196F3;
+            border-radius: 2px;
+        }
+
+        .status-text {
+            color: #fff;
+            margin-left: 10px;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .load-icon {
+            width: 12px;
+            height: 12px;
+            background: #FFC107;
+            clip-path: polygon(0 0, 100% 0, 50% 100%);
+            transform: rotate(180deg);
+        }
+
+        label.control-btn {
+            margin: 0;
+        }
+
+        #loadFile {
+            display: none;
+        }
+
+        .key-cap[data-key="2"] { left: -90px; }
+        .key-cap[data-key="3"] { left: -90px; }
+        .key-cap[data-key="4"] { left: -90px; }
+        .key-cap[data-key="6"] { left: -45px; }
+        .key-cap[data-key="7"] { left: -45px; }
+
+
+        .key-cap[data-key="a"] { left: -45px; }
+        .key-cap[data-key="s"] { left: -45px; }
+
+        .key-cap[data-key="f"] { left: 0px; }
+        .key-cap[data-key="g"] { left: 0px; }
+        .key-cap[data-key="h"] { left: 0px; }
+        .key-cap[data-key="j"] { left: 0px; }
+        .key-cap[data-key="k"] { left: 0px; }
+        
+        #waveCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.3;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="waveCanvas"></canvas>
+    <h1 class="title">钢琴模拟器</h1>
+    <div class="piano-container">
+        <div class="piano">
+            <div class="black-keys">
+                <!-- 第3八度 -->
+                <div class="black-key" data-note="C#3"><span class="key-label">C#3</span></div>
+                <div class="black-key" data-note="D#3"><span class="key-label">D#3</span></div>
+                <div style="width: 40px"></div>
+                <div class="black-key" data-note="F#3"><span class="key-label">F#3</span></div>
+                <div class="black-key" data-note="G#3"><span class="key-label">G#3</span></div>
+                <div class="black-key" data-note="A#3"><span class="key-label">A#3</span></div>
+                <!-- 第4八度 -->
+                <div style="width: 40px"></div>
+                <div class="black-key" data-note="C#4"><span class="key-label">C#4</span></div>
+                <div class="black-key" data-note="D#4"><span class="key-label">D#4</span></div>
+                <div style="width: 40px"></div>
+                <div class="black-key" data-note="F#4"><span class="key-label">F#4</span></div>
+                <div class="black-key" data-note="G#4"><span class="key-label">G#4</span></div>
+                <div class="black-key" data-note="A#4"><span class="key-label">A#4</span></div>
+                <!-- 第5八度 -->
+                <div style="width: 40px"></div>
+                <div class="black-key" data-note="C#5"><span class="key-label">C#5</span></div>
+                <div class="black-key" data-note="D#5"><span class="key-label">D#5</span></div>
+                <div style="width: 40px"></div>
+                <div class="black-key" data-note="F#5"><span class="key-label">F#5</span></div>
+                <div class="black-key" data-note="G#5"><span class="key-label">G#5</span></div>
+                <div class="black-key" data-note="A#5"><span class="key-label">A#5</span></div>
+            </div>
+            <!-- 第3八度 -->
+            <div class="key" data-note="C3"><span class="key-label">C3</span></div>
+            <div class="key" data-note="D3"><span class="key-label">D3</span></div>
+            <div class="key" data-note="E3"><span class="key-label">E3</span></div>
+            <div class="key" data-note="F3"><span class="key-label">F3</span></div>
+            <div class="key" data-note="G3"><span class="key-label">G3</span></div>
+            <div class="key" data-note="A3"><span class="key-label">A3</span></div>
+            <div class="key" data-note="B3"><span class="key-label">B3</span></div>
+            <!-- 第4八度 -->
+            <div class="key" data-note="C4"><span class="key-label">C4</span></div>
+            <div class="key" data-note="D4"><span class="key-label">D4</span></div>
+            <div class="key" data-note="E4"><span class="key-label">E4</span></div>
+            <div class="key" data-note="F4"><span class="key-label">F4</span></div>
+            <div class="key" data-note="G4"><span class="key-label">G4</span></div>
+            <div class="key" data-note="A4"><span class="key-label">A4</span></div>
+            <div class="key" data-note="B4"><span class="key-label">B4</span></div>
+            <!-- 第5八度 -->
+            <div class="key" data-note="C5"><span class="key-label">C5</span></div>
+            <div class="key" data-note="D5"><span class="key-label">D5</span></div>
+            <div class="key" data-note="E5"><span class="key-label">E5</span></div>
+            <div class="key" data-note="F5"><span class="key-label">F5</span></div>
+            <div class="key" data-note="G5"><span class="key-label">G5</span></div>
+            <div class="key" data-note="A5"><span class="key-label">A5</span></div>
+            <div class="key" data-note="B5"><span class="key-label">B5</span></div>
+        </div>
+    </div>
+    <div class="control-panel">
+        <button id="recordBtn" class="control-btn">
+            <span class="record-icon"></span>
+            录制
+        </button>
+        <button id="playBtn" class="control-btn" disabled>
+            <span class="play-icon"></span>
+            <span class="btn-text">播放</span>
+        </button>
+        <button id="saveBtn" class="control-btn" disabled>
+            <span class="save-icon"></span>
+            保存
+        </button>
+        <label class="control-btn" for="loadFile">
+            <span class="load-icon"></span>
+            加载
+            <input type="file" id="loadFile" accept=".wav,.mp3" style="display: none;">
+        </label>
+        <span id="recordingStatus" class="status-text"></span>
+    </div>
+    <div class="keyboard-container">
+        <div class="keyboard">
+            <!-- 数字键行 -->
+            <div class="keyboard-row">
+                <div class="key-cap black" data-key="2">2<span>F#4</span></div>
+                <div class="key-cap black" data-key="3">3<span>G#4</span></div>
+                <div class="key-cap black" data-key="4">4<span>A#4</span></div>
+                <div class="key-cap black" data-key="6">6<span>C#5</span></div>
+                <div class="key-cap black" data-key="7">7<span>D#5</span></div>
+                <div class="key-cap black" data-key="9">9<span>F#5</span></div>
+                <div class="key-cap black" data-key="0">0<span>G#5</span></div>
+                <div class="key-cap black" data-key="-">-<span>A#5</span></div>
+            </div>
+            <!-- Q行 -->
+            <div class="keyboard-row">
+                <div class="key-cap" data-key="q">Q<span>F4</span></div>
+                <div class="key-cap" data-key="w">W<span>G4</span></div>
+                <div class="key-cap" data-key="e">E<span>A4</span></div>
+                <div class="key-cap" data-key="r">R<span>B4</span></div>
+                <div class="key-cap" data-key="t">T<span>C5</span></div>
+                <div class="key-cap" data-key="y">Y<span>D5</span></div>
+                <div class="key-cap" data-key="u">U<span>E5</span></div>
+                <div class="key-cap" data-key="i">I<span>F5</span></div>
+                <div class="key-cap" data-key="o">O<span>G5</span></div>
+                <div class="key-cap" data-key="p">P<span>A5</span></div>
+                <div class="key-cap" data-key="[">[<span>B5</span></div>
+            </div>
+            <!-- A行 -->
+            <div class="keyboard-row">
+                <div class="key-cap black" data-key="a">A<span>C#3</span></div>
+                <div class="key-cap black" data-key="s">S<span>D#3</span></div>
+                <div class="key-cap black" data-key="f">F<span>F#3</span></div>
+                <div class="key-cap black" data-key="g">G<span>G#3</span></div>
+                <div class="key-cap black" data-key="h">H<span>A#3</span></div>
+                <div class="key-cap black" data-key="j">J<span>C#4</span></div>
+                <div class="key-cap black" data-key="k">K<span>D#4</span></div>
+            </div>
+            <!-- Z行 -->
+            <div class="keyboard-row">
+                <div class="key-cap" data-key="z">Z<span>C3</span></div>
+                <div class="key-cap" data-key="x">X<span>D3</span></div>
+                <div class="key-cap" data-key="c">C<span>E3</span></div>
+                <div class="key-cap" data-key="v">V<span>F3</span></div>
+                <div class="key-cap" data-key="b">B<span>G3</span></div>
+                <div class="key-cap" data-key="n">N<span>A3</span></div>
+                <div class="key-cap" data-key="m">M<span>B3</span></div>
+                <div class="key-cap" data-key=",">,<span>C4</span></div>
+                <div class="key-cap" data-key=".">.<span>D4</span></div>
+                <div class="key-cap" data-key="/">/<span>E4</span></div>
+            </div>
+        </div>
+    </div>
+    <script src="piano.js"></script>
+</body>
+</html> 
